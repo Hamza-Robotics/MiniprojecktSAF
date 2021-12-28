@@ -1,0 +1,28 @@
+PROGRAM PLC_PRG
+VAR
+	iState			:	INT ;
+	TCP				:	DC_ECP.TcpClientByteStream;
+	timer			:	TON;
+	RFID			:	dc_ecp.Dtm425;
+	randomString	:	STRING := 'HELLO ';
+	rfidData		:	dc_ecp.st_CPF_RfidData;
+	carrierID: UINT;
+	State: UINT := 0;
+	usiNodeId: USINT := 32;
+	usiNetworkId: USINT := 0;
+	usiChannel: USINT := 1;
+	dataIn: WORD ;
+	dataOut: USINT;
+	dataOutnwew: WORD :=0;
+	Timefound: TIME;
+	output: STRING(200);
+	stationID: UINT;
+	changedata: DWORD;
+	Error: INT :=0;
+	PalletID: INT;
+	
+	a: INT;
+END_VAR	
+VAR RETAIN
+	dataOutTest: INT;
+END_VAR
