@@ -2,6 +2,7 @@ import socket
 import xml.sax
 import xml.etree.ElementTree as ET
 import os
+import logging
 
 import csv
 
@@ -30,6 +31,10 @@ class FestoHandler( xml.sax.ContentHandler ):
          self.Error = content
 
       self.CurrentData = ""
+logging.basicConfig(filename="log.txt",
+                            format='%(asctime)s,  %(message)s',
+                            datefmt='dato:%d/%m/%Y tid:%H:%M:%S',
+                            level=logging.DEBUG)
 
 
 def clearConsole():
@@ -85,7 +90,7 @@ while True:
             carrierNumber=getCarrierNumber(Handler.ID)
             seconds = int(rows[carrierNumber][int(Handler.stationnumber)])
             #if Handler.Error is '0':
-            print("Carrier Number:", carrierNumber, ", Stations Number:", Handler.stationnumber, ", Waiting for", seconds, "milliseconds", ", Retry?[1/0]: ", Handler.Error)
+            logging.info("Carrier Number:"+ str(carrierNumber)+ ", Stations Number:"+ str(Handler.stationnumber)+ ", Waiting for"+ str(seconds)+ "milliseconds")
             seconds = seconds.to_bytes(4,'big')
 
         clientsocket.send(seconds)
