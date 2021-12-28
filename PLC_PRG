@@ -1,0 +1,77 @@
+
+CASE state OF
+	0: //initialization
+	GVL.xQA1_RIGHT := TRUE;
+	GVL.xMB20 := FALSE;
+	TCP.Connect(sIP:='172.20.66.44', uiPort:=1234);
+	RFID.ClearError();
+	stationID := 13;
+	state := 1;
+
+	1: //Wait for TCP connect
+	IF tcp.xConnected AND tcp.xReady THEN
+		state:= 2;
+	END_IF
+	
+	2: //Wait for RFID to clear
+	IF RFID.xReady THEN
+		RFID.Connect(32,0,1);
+		state :=3;
+	END_IF
+	
+	3: // Wait for RFID to connect
+	IF RFID.xReady THEN
+		state :=4;
+	END_IF
+	
+	
+	4: // wait for carrier
+	IF GVL.xBG24 = TRUE OR GVL.xBG23 = TRUE OR GVL.xBG22 = TRUE THEN
+		GVL.xMB20 := FALSE;
+		state := 5;
+	ELSIF GVL.xBG21 = TRUE AND GVL.xMB20 = FALSE THEN
+		state := 5;
+	END_IF
+	
+	5: // Read the RFID tag:
+	RFID.ReadTag(uiStartAddress := 0, uiDataLength := SIZEOF(rfidData), ADR(rfidData));
+	state := 6;
+	
+	6: // Wait RFID tag:
+	IF RFID.xReady THEN
+		output:=CONCAT(('<pallet><ID>'),INT_TO_STRING(rfidData.uiCarrierID));
+		output:=CONCAT((output),('</ID><stationnumber>'));
+		output:=CONCAT((output),INT_TO_STRING(stationID));
+		output:=CONCAT((output),('</stationnumber><Error>'));
+		output:=concat((output),INT_TO_STRING(Error));
+		output:=CONCAT((output),('</Error></pallet>'));
+		tcp.Send(ADR(output),SIZEOF(output));
+		
+		state := 10;
+	END_IF
+	
+	10: // Wait for tcp:
+	IF tcp.xReady THEN	
+		tcp.Receive(pToReceive:=ADR(dataIn),uiSizeToReceive:=SIZEOF(dataIn));
+		dataOutnwew:=DC_ECP.SwapWORD(datain);
+		timer(in:=FALSE);
+		timefound:=	INT_TO_TIME(dataOutnwew);
+		Error:=0;
+		state:=20;
+	END_IF	
+	
+	20: // release of pallet 9 - 16
+
+	timer(IN:=TRUE, pt:=timefound);
+	state := 21;
+	
+	21: // wait for timer
+	IF timer.Q =TRUE THEN
+		GVL.xMB20 := TRUE;
+		state := 4;
+	END_IF
+	
+END_CASE
+RFID();
+timer();
+TCP();
